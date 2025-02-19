@@ -1,18 +1,37 @@
+const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
-const { Client } = require('whatsapp-web.js');
-const client = new Client();
-
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 const users = {}; // Armazena os nomes dos usuários
 
+// Inicializa o cliente com autenticação local
+const client = new Client({
+    authStrategy: new LocalAuth({
+        clientId: "client-one"
+    }),
+});
+
 // Serviço de leitura do QR Code
-client.on('qr', qr => {
+client.on('qr', (qr) => {
+    console.log('QR Code recebido, por favor escaneie.');
     qrcode.generate(qr, { small: true });
 });
 
 client.on('ready', () => {
     console.log('Tudo certo! WhatsApp conectado.');
+    clientReady = true;
+});
+
+client.on('authenticated', () => {
+    console.log('Autenticado com sucesso!');
+});
+
+client.on('auth_failure', (msg) => {
+    console.error('Falha na autenticação', msg);
+});
+
+client.on('disconnected', (reason) => {
+    console.log('Cliente desconectado', reason);
 });
 
 client.initialize();
@@ -26,7 +45,7 @@ client.on('message', async msg => {
         if (!users[userId]) {
             await chat.sendStateTyping();
             await delay(2000);
-            await client.sendMessage(userId, 'Bem vindo(a) ao atendimento Inovar!\n Para começarmos, me informe o seu nome?');
+            await client.sendMessage(userId, 'Bem vindo(a) ao atendimento Inovar!\n Por gentileza, me informe o seu nome?');
             users[userId] = { step: 'waiting_name' };
             return;
         }
@@ -48,7 +67,7 @@ client.on('message', async msg => {
             } else if (msg.body === '2') {
                 await chat.sendStateTyping();
                 await delay(2000);
-                await client.sendMessage(msg.from, 'Para liberar um visitante, acesse o app do condomínio e siga as instruções na seção de visitantes.');
+                await client.sendMessage(msg.from, 'Para liberar um visitante, é necessário se encaminhar até a portaria e solicitar o formulário de liberação.');
             } else if (msg.body === '3') {
                 await chat.sendStateTyping();
                 await delay(2000);
@@ -56,7 +75,7 @@ client.on('message', async msg => {
             } else if (msg.body === '4') {
                 await chat.sendStateTyping();
                 await delay(2000);
-                await client.sendMessage(msg.from, 'Para marcar sua mudança, entre em contato com a administração do condomínio pelo telefone ou e-mail.');
+                await client.sendMessage(msg.from, 'Para marcar sua mudança, entre em contato com a administração do condomínio por telefone (19) 9 9923-7273 ou por e-mail contato@destaqueservicos.com.br');
             } else if (msg.body === '5') {
                 await chat.sendStateTyping();
                 await delay(2000);
@@ -79,7 +98,7 @@ client.on('message', async msg => {
             } else if (msg.body === '2') {
                 await chat.sendStateTyping();
                 await delay(2000);
-                await client.sendMessage(msg.from, 'Obrigado por utilizar o atendimento Inovar. Tenha um ótimo dia!');
+                await client.sendMessage(msg.from, 'Obrigado por utilizar o atendimento Inovar.\n Até breve!');
                 delete users[userId];
             }
             return;
@@ -109,7 +128,8 @@ client.on('message', async msg => {
             } else if (msg.body === '6') {
                 await chat.sendStateTyping();
                 await delay(2000);
-                await client.sendMessage(msg.from, 'Para falar com o síndico, por favor, entre em contato pelo telefone (11) 9876-5432 ou pelo e-mail sindico@condominio.com.');
+                await client.sendMessage(msg.from, 'Para falar com o síndico, utilize o e-mail contato@inovar.com.br.\n\n Se preferir, pode enviar a sua dúvida aqui mesmo.\n O prazo de resposta é de 24h.');
+                return;
             }
             await delay(2000);
             await chat.sendStateTyping();
